@@ -11,7 +11,7 @@ This bot, written in Python, fetches individual users messages histories and gen
 
 ``=sussy ID``
 
-``=info @SOMEONE/NICMANE/NAME
+``=info @SOMEONE/NICMANE/NAME``
 
 
 In order to be able to generate a text, you need to grow the database with a fetch, for example: ``=fetch 2 3000``.
