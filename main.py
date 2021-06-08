@@ -112,9 +112,61 @@ async def fetch(ctx, day=7, lim=1500):
 @bot.command()
 async def sus(ctx, member: discord.Member):
     if ctx.author.id == ctx.me.id:
-        return
-        
+        return    
+    
     id = member.id
+    
+    list = []
+    sep = "\n"
+    
+    try:
+        user = User.get(id=id)
+        for message in user.messages:
+            list.append(message.content)
+    except:
+        await ctx.send("User has database entries yet")
+        return
+    
+    markovText = sep.join(list)
+    
+    text_model = markovify.NewlineText(markovText)
+    
+    #Handling webhooks
+    #webhooks = await ctx.channel.webhooks()
+    #webhook = utils.get(webhooks, name = "sus")
+    #if webhook == None:
+    #    webhook = await ctx.channel.create_webhook(name = "sus")
+    
+    #Handling black-/whitelists 
+    #if ctx.channel.name in BLACKLIST or ctx.author.name not in USER_WHITELIST:
+    #    return
+    
+    #Sending message 
+    await ctx.message.delete()
+    
+    i=0
+    msg = None
+    while msg is None:
+        msg = text_model.make_short_sentence(280)
+        i = i+1
+        if i == 500:
+            #await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
+            await hook(ctx, member, "Failed to generate text, try again")
+            return
+    
+    if msg is None:
+        #await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
+        await hook(ctx, member, "Failed to generate text, try again")
+        return
+    
+    await hook(ctx, member, msg.replace("@", ""))
+    #await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
+
+
+@bot.command()
+async def sussy(ctx, id):
+    if ctx.author.id == ctx.me.id:
+        return
     
     list = []
     sep = "\n"
@@ -150,65 +202,14 @@ async def sus(ctx, member: discord.Member):
         msg = text_model.make_short_sentence(280)
         i = i+1
         if i == 500:
-            await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
+            await ctx.send("Failed to generate text, try again")
             return
     
     if msg is None:
-        await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
+        await ctx.send("Failed to generate text, try again")
         return
     
-    await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
-
-
-@bot.command()
-async def sussy(ctx, member: discord.Member):
-    if ctx.author.id == ctx.me.id:
-        return
-        
-    id = member.id
-    
-    list = []
-    sep = "\n"
-    
-    try:
-        user = User.get(id=id)
-        for message in user.messages:
-            list.append(message.content)
-    except:
-        await ctx.send("User has database entries yet")
-        return
-    
-    markovText = sep.join(list)
-    
-    text_model = markovify.NewlineText(markovText)
-    
-    #Handling webhooks
-    webhooks = await ctx.channel.webhooks()
-    webhook = utils.get(webhooks, name = "sus")
-    if webhook == None:
-        webhook = await ctx.channel.create_webhook(name = "sus")
-    
-    #Handling black-/whitelists 
-    #if ctx.channel.name in BLACKLIST or ctx.author.name not in USER_WHITELIST:
-    #    return
-    
-    #Sending message 
-    await ctx.message.delete()
-    
-    i=0
-    msg = None
-    while msg is None:
-        msg = text_model.make_sentence()
-        i = i+1
-        if i == 500:
-            await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
-            return
-    
-    if msg is None:
-        await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
-        return
-    
-    await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
+    await ctx.send(msg.replace("@", ""))
 
 
 
@@ -234,13 +235,31 @@ async def whitelist(ctx):
     
     updateList()
     
-
-#@bot.command()
-#async def help(ctx):
-#    if ctx.author.id == ctx.me.id:
-#        return
-#    
-#    await ctx.send("Avaiable command:\n- ``$fetch DAYS MSGS`` Fetches and enters a given amount of messages from X amount of days ago into a database\n- ``$sus NICKNAME`` Generates a setence based on Markov with the database")
+@bot.command()
+async def say(ctx, *content):
+    await ctx.message.delete()
+    if ctx.author.id == ctx.me.id:
+        return
+    
+    if content == "" or content == None:
+        await ctx.send("You need to specify something to say!")
+        
+    msg = ""
+    
+    for n in content:
+        msg = msg + ' ' + n
+    
+    print("I worked this many times")
+    await hook(ctx, ctx.author, msg)
+    
+    
+async def hook(ctx, member, content):
+    webhooks = await ctx.channel.webhooks()
+    webhook = utils.get(webhooks, name = "sus")
+    if webhook == None:
+        webhook = await ctx.channel.create_webhook(name = "sus")
+        
+    await webhook.send(content, username = member.display_name, avatar_url = member.avatar_url)
 
 def updateList():
     with open("cfg.ini", "w") as configfile:
