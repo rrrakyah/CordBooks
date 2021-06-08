@@ -20,7 +20,7 @@ intents.guild_messages = True
 intents.presences = True
 intents.webhooks = True
 
-TOKEN = "ODUxMTQ1MjUyNjA5NTg5Mjgw.YL0AyQ.mRaHYsCir897abRvmE577qz4poA"
+TOKEN = ""
 bot = commands.Bot(command_prefix='=', intents=intents)
 client = discord.Client()
 
