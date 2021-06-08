@@ -17,3 +17,5 @@ This would fetch 3000 messages in the channel you sent the command in, starting 
 
 
 Once a user has enough entries in the database, you can do something like ``$sus kat`` or ``$sus @pie`` to generate a message based on their prior messages that have been fetched.
+
+It is to be noted that ``$sus`` and ``$sussy`` are two diffrent commands and differ in their generation.
