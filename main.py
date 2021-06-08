@@ -150,14 +150,66 @@ async def sus(ctx, member: discord.Member):
         msg = text_model.make_short_sentence(280)
         i = i+1
         if i == 500:
-            await webhook.send("Failed to generate text, try again", username = member.name, avatar_url = member.avatar_url)
+            await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
             return
     
     if msg is None:
-        await webhook.send("Failed to generate text, try again", username = member.name, avatar_url = member.avatar_url)
+        await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
         return
     
-    await webhook.send(msg.replace("@", ""), username = member.name, avatar_url = member.avatar_url)
+    await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
+
+
+@bot.command()
+async def sussy(ctx, member: discord.Member):
+    if ctx.author.id == ctx.me.id:
+        return
+        
+    id = member.id
+    
+    list = []
+    sep = "\n"
+    
+    try:
+        user = User.get(id=id)
+        for message in user.messages:
+            list.append(message.content)
+    except:
+        await ctx.send("User has database entries yet")
+        return
+    
+    markovText = sep.join(list)
+    
+    text_model = markovify.NewlineText(markovText)
+    
+    #Handling webhooks
+    webhooks = await ctx.channel.webhooks()
+    webhook = utils.get(webhooks, name = "sus")
+    if webhook == None:
+        webhook = await ctx.channel.create_webhook(name = "sus")
+    
+    #Handling black-/whitelists 
+    #if ctx.channel.name in BLACKLIST or ctx.author.name not in USER_WHITELIST:
+    #    return
+    
+    #Sending message 
+    await ctx.message.delete()
+    
+    i=0
+    msg = None
+    while msg is None:
+        msg = text_model.make_sentence()
+        i = i+1
+        if i == 500:
+            await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
+            return
+    
+    if msg is None:
+        await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
+        return
+    
+    await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
+
 
 
 @bot.command()
