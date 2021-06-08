@@ -129,6 +129,8 @@ async def sus(ctx, member: discord.Member):
     
     markovText = sep.join(list)
     
+    nlines = markovText.count("\n")
+    
     text_model = markovify.NewlineText(markovText)
     
     #Handling webhooks
@@ -160,6 +162,7 @@ async def sus(ctx, member: discord.Member):
         return
     
     await hook(ctx, member, msg.replace("@", ""))
+    print(str(nlines))
     #await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
 
 
