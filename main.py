@@ -86,7 +86,7 @@ async def fetch(ctx, day=7, lim=1500):
                 b = b+1
                 continue
         
-            if '$fetch' in n.content or '$sus' in n.content or '$hi' in n.content or '$test' in n.content or '$whitelist' in n.content:
+            if '=fetch' in n.content or '=sus' in n.content or '=hi' in n.content or '=test' in n.content or '=whitelist' in n.content:
                 b = b+1
                 continue
         
