@@ -12,8 +12,15 @@ import datetime
 import markovify
 
 
+intents = discord.Intents.default()
+intents.members = True
+intents.presences = True
+intents.guild_messages = True
+intents.presences = True
+intents.webhooks = True
+
 TOKEN = os.getenv("DISCORD_TOKEN")
-bot = commands.Bot(command_prefix='$')
+bot = commands.Bot(command_prefix='$', intents=intents)
 client = discord.Client()
 
 config = configparser.ConfigParser()
@@ -21,7 +28,6 @@ config.read("cfg.ini")
 
 BLACKLIST = config.get("lists", "channel_blacklist")
 WHITELIST = config.get("lists", "user_whitelist")
-
 
 
 #Database stuff
@@ -57,10 +63,10 @@ async def fetch(ctx, day=7, lim=1500):
         return
     
     if day != 7:
-        print("Amount of days before: " + str(day))
+        print("\nAmount of days before: " + str(day))
     
-    if lim >= 5000:
-        lim=5000
+    if lim >= 4300:
+        lim=4300
         
     print("For amount of messages: " + str(lim))
     
@@ -68,50 +74,45 @@ async def fetch(ctx, day=7, lim=1500):
     d = datetime.datetime.now() - datetime.timedelta(days=day)
     
     messages = await ctx.channel.history(limit=lim, before=d).flatten()
-    await ctx.send("Now fetching " + str(lim) + " messages from " + str(d))
+    #await ctx.send("Now fetching " + str(lim) + " messages from " + str(d))
     
     i=0
     a=0
     b=0
-    
-    for n in messages:
-        if n.content == '' or validators.url(n.content):
-            b = b+1
-            continue
+    with db.atomic():
+        for n in messages:
+            if n.content == '' or validators.url(n.content):
+                b = b+1
+                continue
         
-        if '$fetch' in n.content or '$sus' in n.content or '$hi' in n.content or '$test' in n.content or '$whitelist' in n.content:
-            b = b+1
-            continue
+            if '$fetch' in n.content or '$sus' in n.content or '$hi' in n.content or '$test' in n.content or '$whitelist' in n.content:
+                b = b+1
+                continue
         
-        #if n.author.id == member.id:
-        try:
-            user = User.get(User.id == n.author.id)
-        except User.DoesNotExist:
-            user = User.create(id=n.author.id, username=n.author)
+        #   if n.author.id == member.id:
+            try:
+                user = User.get(User.id == n.author.id)
+            except User.DoesNotExist:
+                user = User.create(id=n.author.id, username=n.author)
             
-        try:
-            Message.create(user=user, id=n.id, content=n.content, created_date=n.created_at)
-            a = a+1
-        except:
-            #print("Didnt work:  ", n.author.name, n.content, n.created_at)
-            i = i+1
-            pass
+            try:
+                Message.create(user=user, id=n.id, content=n.content, created_date=n.created_at)
+                a = a+1
+            except:
+                #print("Didnt work:  ", n.author.name, n.content, n.created_at)
+                i = i+1
+                pass
         
     print("Fetch successful")
     print(str(a) + " messages success")
     print(str(i) + " messages failed")
-    print(str(b) + " messages were commands/links")
+    print(str(b) + " messages were commands/links\n")
     
     
 @bot.command()
 async def sus(ctx, member: discord.Member):
     if ctx.author.id == ctx.me.id:
         return
-    
-    members = ctx.guild.members
-    
-    #for member in members:
-    #    print(member.display_name)
         
     id = member.id
     
@@ -156,11 +157,11 @@ async def sus(ctx, member: discord.Member):
         await webhook.send("Failed to generate text, try again", username = member.name, avatar_url = member.avatar_url)
         return
     
-    await webhook.send(msg, username = member.name, avatar_url = member.avatar_url)
+    await webhook.send(msg.replace("@", ""), username = member.name, avatar_url = member.avatar_url)
 
 
 @bot.command()
-async def whitelist(ctx, member: discord.Member):
+async def whitelist(ctx):
     await ctx.send("This command isnt ready yet!")
     return
     if ctx.author.id == ctx.me.id:
@@ -182,6 +183,13 @@ async def whitelist(ctx, member: discord.Member):
     updateList()
     
 
+#@bot.command()
+#async def help(ctx):
+#    if ctx.author.id == ctx.me.id:
+#        return
+#    
+#    await ctx.send("Avaiable command:\n- ``$fetch DAYS MSGS`` Fetches and enters a given amount of messages from X amount of days ago into a database\n- ``$sus NICKNAME`` Generates a setence based on Markov with the database")
+
 def updateList():
     with open("cfg.ini", "w") as configfile:
         config.write(configfile)
@@ -189,5 +197,5 @@ def updateList():
 
 db.connect()
 db.create_tables([User, Message])
-bot.run(TOKEN) & client.run(TOKEN)
+bot.run(TOKEN)
 
