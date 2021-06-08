@@ -10,6 +10,7 @@ import os
 from validators.url import url
 import datetime
 import markovify
+import re
 
 
 intents = discord.Intents.default()
@@ -19,8 +20,8 @@ intents.guild_messages = True
 intents.presences = True
 intents.webhooks = True
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-bot = commands.Bot(command_prefix='$', intents=intents)
+TOKEN = "ODUxMTQ1MjUyNjA5NTg5Mjgw.YL0AyQ.mRaHYsCir897abRvmE577qz4poA"
+bot = commands.Bot(command_prefix='=', intents=intents)
 client = discord.Client()
 
 config = configparser.ConfigParser()
@@ -52,8 +53,8 @@ class Message(BaseModel):
 async def fetch(ctx, day=7, lim=1500):
     await ctx.message.delete()
     
-    if day >=365:
-        day=365
+    if day >=1000:
+        day=1000
     
     if ctx.author.id == ctx.me.id:
         return
@@ -65,10 +66,10 @@ async def fetch(ctx, day=7, lim=1500):
     if day != 7:
         print("\nAmount of days before: " + str(day))
     
-    if lim >= 4300:
-        lim=4300
+    if lim >= 10000:
+        lim=10000
         
-    print("For amount of messages: " + str(lim))
+    print("For amount of messages: " + str(lim) + "\n")
     
     #Scraping history
     d = datetime.datetime.now() - datetime.timedelta(days=day)
@@ -128,7 +129,7 @@ async def sus(ctx, member: discord.Member):
         return
     
     markovText = sep.join(list)
-    
+
     nlines = markovText.count("\n")
     
     text_model = markovify.NewlineText(markovText)
@@ -149,7 +150,17 @@ async def sus(ctx, member: discord.Member):
     i=0
     msg = None
     while msg is None:
-        msg = text_model.make_short_sentence(280)
+
+        filtered = text_model.make_short_sentence(280)
+
+        for badWord in config.get("lists", "word_blacklist"):
+            if badWord not in filtered:
+                continue
+            else:
+                msg = None
+    
+        msg = filtered
+        
         i = i+1
         if i == 500:
             #await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
@@ -160,9 +171,8 @@ async def sus(ctx, member: discord.Member):
         #await webhook.send("Failed to generate text, try again", username = member.display_name, avatar_url = member.avatar_url)
         await hook(ctx, member, "Failed to generate text, try again")
         return
-    
-    await hook(ctx, member, msg.replace("@", ""))
-    print(str(nlines))
+
+    await hook(ctx, member, msg)
     #await webhook.send(msg.replace("@", ""), username = member.display_name, avatar_url = member.avatar_url)
 
 
@@ -212,7 +222,7 @@ async def sussy(ctx, id):
         await ctx.send("Failed to generate text, try again")
         return
     
-    await ctx.send(msg.replace("@", ""))
+    await ctx.send(msg.replace("@", "@_"))
 
 
 
@@ -254,6 +264,33 @@ async def say(ctx, *content):
     
     print("I worked this many times")
     await hook(ctx, ctx.author, msg)
+    
+@bot.command()
+async def info(ctx, member: discord.Member):
+    await ctx.message.delete()
+    if ctx.author.id == ctx.me.id:
+        return    
+    
+    id = member.id
+    
+    list = []
+    sep = "\n"
+    
+    try:
+        user = User.get(id=id)
+        for message in user.messages:
+            list.append(message.content)
+    except:
+        await ctx.send("User has database entries yet")
+        return
+    
+    markovText = sep.join(list)
+
+    nlines = markovText.count("\n")
+
+    msg = member.display_name + " has " + str(nlines) + " messages in the database"
+
+    await hook(ctx, member, msg)
     
     
 async def hook(ctx, member, content):
